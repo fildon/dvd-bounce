@@ -22,7 +22,7 @@ const colors = [
 
 // Put an irrational number in the start position so that we never loop
 let position = { x: Math.E, y: Math.PI };
-let velocity = { x: 5, y: 5 };
+let velocity = { x: 2, y: 2 };
 let color = colors[Math.floor(Math.random() * colors.length)];
 
 const newRandomColor = () => {
