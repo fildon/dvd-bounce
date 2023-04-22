@@ -1,11 +1,11 @@
-const dvdLogo = document.getElementById("dvd-logo");
+//#region Constants
 
 /**
  * Basic Colors
  *
  * @link https://www.w3.org/wiki/CSS/Properties/color/keywords#Basic_Colors
  */
-const colors = [
+const BASIC_COLORS = [
   "maroon",
   "red",
   "purple",
@@ -20,82 +20,76 @@ const colors = [
   "aqua",
 ];
 
-// Put an irrational number in the start position so that we never loop
-let position = { x: Math.E, y: Math.PI };
-let velocity = { x: 2, y: 2 };
-let color = colors[Math.floor(Math.random() * colors.length)];
+const DVD_LOGO_WIDTH = 394; // px
+const DVD_LOGO_HEIGHT = 180; // px
+/**
+ * The speed of the animation as measured in pixels travelled per millisecond
+ */
+const PIXELS_PER_MILLI = 1 / 7;
 
-const newRandomColor = () => {
-  const otherColors = colors.filter((c) => c !== color);
-  color = otherColors[Math.floor(Math.random() * otherColors.length)];
+//#endregion
+
+//#region Pure Functions
+
+const pickRandomFrom = (array) =>
+  array[Math.floor(Math.random() * array.length)];
+
+const getNextState = (previousState, timestamp, screenWidth, screenHeight) => {
+  const x_amplitude = (screenWidth - DVD_LOGO_WIDTH) / 2;
+  const y_amplitude = (screenHeight - DVD_LOGO_HEIGHT) / 2;
+  const x_period = screenWidth / PIXELS_PER_MILLI;
+  const y_period = screenHeight / PIXELS_PER_MILLI;
+
+  // https://en.wikipedia.org/wiki/Triangle_wave
+  const x =
+    ((4 * x_amplitude) / x_period) *
+    Math.abs((timestamp % x_period) - x_period / 2);
+  const y =
+    ((4 * y_amplitude) / y_period) *
+    Math.abs((timestamp % y_period) - y_period / 2);
+  const xDir = timestamp % x_period > x_period / 2;
+  const yDir = timestamp % y_period > y_period / 2;
+
+  return {
+    x,
+    xDir,
+    y,
+    yDir,
+    color:
+      // Detect a bounce, and change color if so
+      xDir !== previousState.xDir || yDir !== previousState.yDir
+        ? pickRandomFrom(BASIC_COLORS.filter((x) => x !== previousState.color))
+        : previousState.color,
+  };
 };
 
-const updateX = () => {
-  // We apply the x velocity one pixel at a time
-  // This lets us detect collisions with pixel precision
-  let xSpeed = Math.abs(velocity.x);
-  let xDir = velocity.x / xSpeed; // +1 | -1
-  let xPosition = position.x;
-  while (xSpeed > 0) {
-    xSpeed--;
-    if (
-      // Right wall collision
-      (xDir > 0 &&
-        xPosition + xDir >
-          window.innerWidth - dvdLogo.getBoundingClientRect().width) ||
-      // Left wall collision
-      (xDir < 0 && xPosition + xDir < 0)
-    ) {
-      // Bounce off a wall
-      xDir *= -1;
-      velocity.x *= -1;
-      newRandomColor();
-    }
-    xPosition += xDir;
-  }
-  // Actually write the new position
-  position.x = xPosition;
+//#endregion
+
+//#region Imperative Shell
+
+const renderState = ({ x, y, color }) => {
+  const dvdLogoElement = document.getElementById("dvd-logo");
+  dvdLogoElement.style.left = `${x}px`;
+  dvdLogoElement.style.top = `${y}px`;
+  dvdLogoElement.style.color = color;
 };
 
-const updateY = () => {
-  // We apply the y velocity one pixel at a time
-  // This lets us detect collisions with pixel precision
-  let ySpeed = Math.abs(velocity.y);
-  let yDir = velocity.y / ySpeed; // +1 | -1
-  let yPosition = position.y;
-  while (ySpeed > 0) {
-    ySpeed--;
-    if (
-      // Bottom wall collision
-      (yDir > 0 &&
-        yPosition + yDir >
-          window.innerHeight - dvdLogo.getBoundingClientRect().height) ||
-      // Top wall collision
-      (yDir < 0 && yPosition + yDir < 0)
-    ) {
-      // Bounce off a wall
-      yDir *= -1;
-      velocity.y *= -1;
-      newRandomColor();
-    }
-    yPosition += yDir;
-  }
-  // Actually write the new position
-  position.y = yPosition;
+const step = (previousState) => (timestamp) => {
+  // Compute next state
+  const nextState = getNextState(
+    previousState,
+    timestamp,
+    window.innerWidth,
+    window.innerHeight
+  );
+  // Render state
+  renderState(nextState);
+  // Request next frame
+  window.requestAnimationFrame(step(nextState));
 };
 
-const updateState = () => {
-  updateX();
-  updateY();
-};
+window.requestAnimationFrame(
+  step({ xDir: false, yDir: false, color: pickRandomFrom(BASIC_COLORS) })
+);
 
-const tick = () => {
-  updateState();
-  dvdLogo.style.left = `${position.x}px`;
-  dvdLogo.style.top = `${position.y}px`;
-  dvdLogo.style.color = color;
-};
-
-setInterval(() => {
-  tick();
-}, 1000 / 60);
+//#endregion
