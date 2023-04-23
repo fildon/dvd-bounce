@@ -23,7 +23,7 @@ const BASIC_COLORS = [
 /**
  * The speed of the animation as measured in pixels travelled per millisecond
  */
-const PIXELS_PER_MILLI = 1 / 7;
+const PIXELS_PER_MILLI = 1 / 10;
 
 //#endregion
 
