@@ -20,8 +20,6 @@ const BASIC_COLORS = [
   "aqua",
 ];
 
-const DVD_LOGO_WIDTH = 394; // px
-const DVD_LOGO_HEIGHT = 180; // px
 /**
  * The speed of the animation as measured in pixels travelled per millisecond
  */
@@ -34,9 +32,9 @@ const PIXELS_PER_MILLI = 1 / 7;
 const pickRandomFrom = (array) =>
   array[Math.floor(Math.random() * array.length)];
 
-const getNextState = (previousState, timestamp, screenWidth, screenHeight) => {
-  const x_amplitude = (screenWidth - DVD_LOGO_WIDTH) / 2;
-  const y_amplitude = (screenHeight - DVD_LOGO_HEIGHT) / 2;
+const getNextState = (previousState, timestamp, screenWidth, screenHeight, logoWidth, logoHeight) => {
+  const x_amplitude = (screenWidth - logoWidth) / 2;
+  const y_amplitude = (screenHeight - logoHeight) / 2;
   const x_period = screenWidth / PIXELS_PER_MILLI;
   const y_period = screenHeight / PIXELS_PER_MILLI;
 
@@ -75,12 +73,16 @@ const renderState = ({ x, y, color }) => {
 };
 
 const step = (previousState) => (timestamp) => {
+  const dvdLogoElement = document.getElementById("dvd-logo");
+  const dvdLogoSize = dvdLogoElement.getBoundingClientRect();
   // Compute next state
   const nextState = getNextState(
     previousState,
     timestamp,
     window.innerWidth,
-    window.innerHeight
+    window.innerHeight,
+    dvdLogoSize.width,
+    dvdLogoSize.height,
   );
   // Render state
   renderState(nextState);
